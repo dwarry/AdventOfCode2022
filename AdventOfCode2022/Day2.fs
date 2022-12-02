@@ -2,6 +2,8 @@
 
 type RockPaperScissors = Rock | Paper | Scissors
 
+type DesiredOutcome = Win | Lose | Draw
+
 let parseTheirs (ch: char): RockPaperScissors = 
     match ch with
     | 'A' -> Rock
@@ -16,8 +18,33 @@ let parseMine (ch: char): RockPaperScissors =
     | 'Z' -> Scissors
     | _   -> failwithf "Unknown value: %A" ch
 
+let parseOutcome (ch: char): DesiredOutcome = 
+    match ch with
+    | 'X' -> Lose
+    | 'Y' -> Draw
+    | 'Z' -> Win
+    | _   -> failwithf "Unknown value: %A" ch
+
 let parseLine (line: string) =
     (parseTheirs line[0], parseMine line[2])
+
+let parseLine2 (line: string) = 
+    (parseTheirs line[0], parseOutcome line[2])
+
+let deriveMine (round: RockPaperScissors * DesiredOutcome): RockPaperScissors =
+    match round with
+    | (theirs, Draw) -> theirs
+    | (theirs, Win) when theirs = Rock -> Paper
+    | (theirs, Win) when theirs = Paper -> Scissors
+    | (theirs, Win) when theirs = Scissors -> Rock
+    | (theirs, Lose) when theirs = Rock -> Scissors
+    | (theirs, Lose) when theirs = Paper -> Rock
+    | (theirs, Lose) when theirs = Scissors -> Paper
+
+let deriveRound (round: RockPaperScissors * DesiredOutcome): RockPaperScissors * RockPaperScissors =
+    let mine = deriveMine round
+    (fst round, mine)
+
 
 let scoreRound (choices: RockPaperScissors * RockPaperScissors) = 
     let (theirs, mine) = choices
@@ -44,3 +71,10 @@ let scoreContest path =
     System.IO.File.ReadLines(path)
     |> Seq.map parseLine
     |> Seq.sumBy scoreRound
+
+let scoreContest2 path =
+    System.IO.File.ReadLines(path)
+    |> Seq.map parseLine2
+    |> Seq.map deriveRound
+    |> Seq.sumBy scoreRound
+
