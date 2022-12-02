@@ -1,8 +1,10 @@
 ﻿open System
-open Day1
+open Day2
 
 let path = Environment.GetCommandLineArgs()[1]
 
+let score = scoreContest path
 
-day1 path
+printf "Score: %d\n" score
+
 
