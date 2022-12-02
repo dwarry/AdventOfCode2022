@@ -34,12 +34,12 @@ let parseLine2 (line: string) =
 let deriveMine (round: RockPaperScissors * DesiredOutcome): RockPaperScissors =
     match round with
     | (theirs, Draw) -> theirs
-    | (theirs, Win) when theirs = Rock -> Paper
-    | (theirs, Win) when theirs = Paper -> Scissors
-    | (theirs, Win) when theirs = Scissors -> Rock
-    | (theirs, Lose) when theirs = Rock -> Scissors
-    | (theirs, Lose) when theirs = Paper -> Rock
-    | (theirs, Lose) when theirs = Scissors -> Paper
+    | (Rock, Win) -> Paper
+    | (Paper, Win) -> Scissors
+    | (Scissors, Win) -> Rock
+    | (Rock, Lose) -> Scissors
+    | (Paper, Lose) -> Rock
+    | (Scissors, Lose) -> Paper
 
 let deriveRound (round: RockPaperScissors * DesiredOutcome): RockPaperScissors * RockPaperScissors =
     let mine = deriveMine round
