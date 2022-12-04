@@ -6,11 +6,13 @@ let splitIntoHalves(s: string): string*string =
     let l = s.Length / 2
     s.Substring(0, l), s.Substring(l)
 
+
 let findCommonElement (pair: string*string): char =
     let s1 = pair |> fst |> Set
     let s2 = pair |> snd |> Set
 
     Set.intersect s1 s2 |> Set.toSeq |> Seq.head
+
 
 let findCommonElement2 (group: string seq): char = 
     group 
@@ -24,6 +26,7 @@ let findCommonElement2 (group: string seq): char =
 let score (ch: char): int =
     if ch >= 'A' && ch <= 'Z' then ((int ch) - (int 'A') + 27)
     else ((int ch) - (int 'a') + 1)
+
 
 let day3 (path: string) = 
     let part1 = 
