@@ -2,15 +2,24 @@
 
 open Common
 
+/// Set up the initial cargo state based on the first section of the input file. 
 let parseInitialCargoState (lines: string seq): (char list) array = 
+    // All the lines are of a uniform length, so just take the first. 
     let lineLength = Seq.head lines |> String.length
     
+    // work out the number of stacks of crates. 
     let numberOfStacks = (lineLength + 1) / 4
     
+    // Urgh - mutable state. Oh well, at least it has O(1) access time for looking up
+    // the stacks later on. Initialize it with empty lists. 
     let result = Array.create numberOfStacks List.empty<char>
 
+    // To get the stacks in the right order, process the lines in reverse order, and
+    // ignore the one with the stack numbers as it's irrelevant. 
     let cargoLines = lines |> Seq.rev |> Seq.skip 1 
 
+    // Process each line - pluck the crate ids from the expected positions in the line, 
+    // and update the array's lists with any non-blank entries 
     let processCargoLine (line: string) = 
         let crates = [for i in 0..(numberOfStacks - 1) -> line[(i*4)+1]]
         List.iteri (fun i ch -> if ch <> ' ' then Array.set result i (ch::result[i])) crates
@@ -20,7 +29,10 @@ let parseInitialCargoState (lines: string seq): (char list) array =
 
     result
 
+/// Record for an instruction about moving the cargo, which will be taken from the 
+/// second section of the input file. 
 type CraneInstruction = {number: int; fromStack: int; toStack: int}
+
 
 let parseInstructionLine (line: string): CraneInstruction =
     let parts = line.Split(' ')
