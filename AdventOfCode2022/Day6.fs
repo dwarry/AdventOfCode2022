@@ -10,10 +10,7 @@ let day6 (path: string) =
             (Set.count charSet) = l
 
         let find (i: int) = 
-            match i with
-            | x when x < l -> None
-            | x when isMatch x -> Some i
-            | _ -> None
+            if isMatch i then Some i else None
     
         seq { l..s.Length} |> Seq.pick find 
 
