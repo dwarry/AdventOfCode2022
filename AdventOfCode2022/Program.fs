@@ -1,6 +1,6 @@
 ﻿open System
-open Day7
+open Day8
 
 let path = Environment.GetCommandLineArgs()[1]
 
-day7 path
+run path
