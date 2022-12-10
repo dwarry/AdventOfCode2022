@@ -2,7 +2,7 @@
   "profiles": {
     "AdventOfCode2022": {
       "commandName": "Project",
-      "commandLineArgs": "\"..\\..\\..\\..\\inputs\\Day8.txt\""
+      "commandLineArgs": "\"..\\..\\..\\..\\inputs\\Day9.txt\""
     }
   }
 }

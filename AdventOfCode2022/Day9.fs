@@ -2,17 +2,22 @@
 
 type Direction = Left | Right | Up | Down 
 
-type Instruction = {dir:Direction; count:int}
-
 type RopePosition = {head:int*int; tail:int*int}
 
-let parseLine (line: string): Instruction = 
+let parseLine (line: string): Direction*int = 
     match line.Split(' ') with
-    | [|"L"; n|] -> Left (int n)
-    | [|"R"; n|] -> Right (int n)
-    | [|"U"; n|] -> Up (int n)
-    | [|"D"; n|] -> Down (int n)
+    | [|"L"; n|] -> Left, (int n)
+    | [|"R"; n|] -> Right, (int n)
+    | [|"U"; n|] -> Up, (int n)
+    | [|"D"; n|] -> Down, (int n)
     | _ -> failwithf "Unexpected input: %s" line
+
+let expandInstruction (instruction: Direction*int): Direction seq = 
+    seq {
+        let dir, count = instruction
+        for i = 1 to count do
+            yield dir
+    }
 
 let calcNewRopePosition (pos: RopePosition) (dir: Direction): RopePosition = 
     
@@ -22,8 +27,8 @@ let calcNewRopePosition (pos: RopePosition) (dir: Direction): RopePosition =
     let newHead = match dir with
                   | Left  -> (headX - 1, headY)
                   | Right -> (headX + 1, headY)
-                  | Up    -> (headX,     headY)
-                  | Down  -> (headX,     headY)
+                  | Up    -> (headX,     headY + 1)
+                  | Down  -> (headX,     headY - 1)
 
     let newTailDelta = (fst newHead - tailX, snd newHead - tailY)
 
@@ -36,8 +41,17 @@ let calcNewRopePosition (pos: RopePosition) (dir: Direction): RopePosition =
 
     {head= newHead; tail = newTail}
 
-let processInstruction (pos: RopePosition) (instruction: Instruction) = 
-    
 
+let run (path:string) =
+    let path = 
+        System.IO.File.ReadLines(path)
+        |> Seq.map parseLine
+        |> Seq.collect expandInstruction
+        |> Seq.scan calcNewRopePosition {head=(0,0); tail=(0,0)}
 
-let run (path:string) = ()
+    let tailPositions =
+        path
+        |> Seq.map (fun x -> x.tail)
+        |> Set.ofSeq
+
+    printf "Part 1: %d\n" (Set.count tailPositions)
