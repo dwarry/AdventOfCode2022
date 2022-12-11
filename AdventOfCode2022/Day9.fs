@@ -35,11 +35,13 @@ let calcNewRopePosition (pos: RopePosition) (dir: Direction): RopePosition =
         let tailX,tailY = current
         let newTailDelta = (fst prev - tailX, snd prev - tailY)
 
+        let maxDelta x = System.Math.Clamp(x, -1, 1)
+        
         match newTailDelta with
-            | (2, dy)  -> (tailX + 1,  tailY + dy)
-            | (-2, dy) -> (tailX - 1,  tailY + dy)
-            | (dx, 2)  -> (tailX + dx, tailY + 1)
-            | (dx, -2) -> (tailX + dx, tailY - 1)
+            | (2, dy)  -> (tailX + 1,  tailY + (maxDelta dy))
+            | (-2, dy) -> (tailX - 1,  tailY + (maxDelta dy))
+            | (dx, 2)  -> (tailX + (maxDelta dx), tailY + 1)
+            | (dx, -2) -> (tailX + (maxDelta dx), tailY - 1)
             | _ -> current
 
     let state = (newHead, 0, Array.create (pos.tail.Length) (0,0))
@@ -59,10 +61,10 @@ let visRope (ropePosition: RopePosition) =
     let result = [| for i in 1 .. 50 -> (System.Text.StringBuilder(System.String('.',50))) |]
 
 
-    let setAt x y ch = result[y+25].Chars(x+25) <- ch
+    let setAt x y ch = result[25 - y].Chars(x+25) <- ch
 
     ropePosition.tail
-        |> Array.iteri (fun i x -> setAt (fst x) (snd x) (i.ToString()[0]))
+        |> Array.iteri (fun i x -> setAt (fst x) (snd x) ((i + 1).ToString()[0]))
 
     setAt (fst ropePosition.head) (snd ropePosition.head) 'H'
 
@@ -98,7 +100,7 @@ let run (path:string) =
 
     let tailPositions2 = 
         path2
-        |> Seq.map visRope
+        //|> Seq.map visRope
         |> Seq.map (fun x -> Array.last x.tail)
         |> Set.ofSeq
 
