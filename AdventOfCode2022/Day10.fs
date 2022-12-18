@@ -1,21 +1,44 @@
 ﻿module Day10
 
-type CpuState = { xRegister: int }
+type CpuState = { xRegister: int; tickCount: int; }
 
-type Instruction = {cyclesUntilCompletion: int; update: (CpuState -> CpuState)}
+type Instruction = (CpuState -> CpuState)
 
 let parseLine (line: string): Instruction = 
     let parts = line.Split(' ')
 
     match parts with
-    | [| "noop" |] -> {cyclesUntilCompletion = 1; update = id}
-    | [| "addx"; x |] -> {cyclesUntilCompletion = 3; update = fun cpu -> {cpu with xRegister = cpu.xRegister + (int x)}
+    | [| "noop" |]    -> fun cpu -> {cpu with tickCount = cpu.tickCount + 1} 
+    | [| "addx"; x |] -> fun cpu -> {cpu with xRegister = cpu.xRegister + (int x); tickCount = cpu.tickCount + 2}
     | _ -> failwithf "Unexpected line: %s" line
 
 let rec processInstructions (instructions: Instruction list) (cpu: CpuState) = 
     match instructions with
     | [] -> cpu
-    | x::xs when x.cyclesUntilCompletion = 0 -> processInstructions xs (x.update cpu) 
+    | x::xs  -> processInstructions xs (x cpu) 
 
 let run (path: string) =
+    let states = 
+        System.IO.File.ReadLines(path)
+        |> Seq.map parseLine
+        |> Seq.scan (fun cpu instruction -> instruction cpu) {xRegister=1; tickCount=0}
+        |> Seq.toArray
+
+    let findXAtStartOfTick tick = 
+        let nearest = states |> Array.findIndex (fun x -> x.tickCount >= tick)
+        states[nearest - 1].xRegister
+
+
+    let selectedCycles = 
+        Seq.unfold (fun st -> Some (st, st + 40)) 20
+        |> Seq.takeWhile (fun x -> x <= 220)                 
+    
+    let selectedValues =
+        selectedCycles
+        |> Seq.map (fun x -> (x, findXAtStartOfTick x))
+
+
+    let part1 = selectedValues |> Seq.sumBy (fun x -> (fst x) * (snd x))
+
+    printf "Part 1: %d\n" part1
     ()
