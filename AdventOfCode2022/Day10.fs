@@ -41,4 +41,26 @@ let run (path: string) =
     let part1 = selectedValues |> Seq.sumBy (fun x -> (fst x) * (snd x))
 
     printf "Part 1: %d\n" part1
-    ()
+
+    printf "Part 2:\n"
+
+    let result = seq {
+        for i = 1 to 240 do
+            let j = ((i - 1) % 40)
+
+            let x = findXAtStartOfTick i
+            let pmin = x - 1
+            let pmax = x + 1
+            
+            if (j >= pmin) && (j <= pmax) then 
+                yield '#' 
+            else 
+                yield '.'
+    } 
+                 
+    let lines = result |> Seq.chunkBySize 40 |> Seq.map (fun x -> System.String(x))
+
+    Seq.iter (fun line -> printf "%s\n" line) lines
+    
+
+     
