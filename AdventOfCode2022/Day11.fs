@@ -3,24 +3,24 @@
 open Common
 
 type Monkey = {
-        items: bigint array; 
-        operation: (bigint -> bigint); 
-        test: (bigint -> bool); 
-        recipientIndexes: (int * int) 
-    }
+    items: int array
+    operation: (int->int64)
+    testDenominator: int 
+    recipientIndexes: (int * int) 
+}
 
 let parseMonkey (lines: string list): Monkey = 
     let parseItems (s: string) = 
         let parts = s.Split(": ")[1]
-        parts.Split(", ") |> Array.map bigint.Parse
+        parts.Split(", ") |> Array.map int
 
-    let parseOperation (s: string) =
+    let parseOperation (s: string): (int -> int64) =
         let parts = s.Split("= ")
         let [| x; op; y |] = parts[1].Split(' ')
 
         (fun v ->
-            let x2 = if x = "old" then v else (bigint.Parse x)
-            let y2 = if y = "old" then v else (bigint.Parse y)
+            let x2 = if x = "old" then (int64 v) else (int64 x)
+            let y2 = if y = "old" then (int64 v) else (int64 y)
             match op with
                 | "+" -> x2 + y2
                 | "-" -> x2 - y2
@@ -30,8 +30,8 @@ let parseMonkey (lines: string list): Monkey =
 
     let parseTest (s: string) = 
         let parts = s.Split("by ")
-        let denominator = bigint (int parts[1])
-        (fun (v: bigint) -> (v % denominator) = bigint.Zero)
+        int parts[1]
+        
 
     let parseRecipient (s: string) = 
         let parts = s.Split("monkey ")
@@ -42,48 +42,53 @@ let parseMonkey (lines: string list): Monkey =
         {
             items = parseItems l1
             operation = parseOperation l2
-            test = parseTest l3
+            testDenominator = parseTest l3
             recipientIndexes = (parseRecipient l4, parseRecipient l5)
         }
     | _ -> failwithf "Unexpected batch of lines: %A" lines
 
 
-let processRound (monkeys: Monkey array) (counts: int64 array) = 
+let processRound (monkeys: Monkey array) (counts: int array) = 
     
-    let three = bigint 3
-
+    
     let processMonkey (i: int) (monkey: Monkey) = 
                 
-        Array.set counts i (counts[i] + (int64 (Array.length monkey.items)))
+        Array.set counts i (counts[i] + Array.length monkey.items)
 
         monkey.items |>
             Array.iter (fun item -> 
-                            let newScore = ((monkey.operation item) / three)
-                            let recipientIndex = if (monkey.test newScore) then (fst monkey.recipientIndexes) else (snd monkey.recipientIndexes)
+                            let newScore = int32 ((monkey.operation item) / 3L)
+                            let recipientIndex = if (newScore % monkey.testDenominator = 0) then (fst monkey.recipientIndexes) else (snd monkey.recipientIndexes)
                             let recipient = monkeys[recipientIndex] 
                             let newRecipient = {recipient with items = Array.append recipient.items [|newScore|] }
                             Array.set monkeys recipientIndex newRecipient
-                            let newMonkey = {monkey with items = Array.empty<bigint>}
+                            let newMonkey = {monkey with items = Array.empty<int>}
                             Array.set monkeys i newMonkey)
 
     monkeys 
         |> Array.iteri processMonkey 
 
+let processRound2 (monkeys: Monkey array) (counts: int array) = 
 
-let processRound2 (monkeys: Monkey array) (counts: int64 array) = 
+    let modulus = //System.Int32.MaxValue |> int64 |> (+) 1L 
+        monkeys 
+        |> Seq.map (fun x -> x.testDenominator) 
+        |> Set.ofSeq 
+        |> Set.fold (fun acc x -> acc * x) 1 
+        |> int64
     
     let processMonkey (i: int) (monkey: Monkey) = 
                 
-        Array.set counts i (counts[i] + (int64 (Array.length monkey.items)))
+        Array.set counts i (counts[i] + Array.length monkey.items)
 
         monkey.items |>
             Array.iter (fun item -> 
-                            let newScore = (monkey.operation item)
-                            let recipientIndex = if (monkey.test newScore) then (fst monkey.recipientIndexes) else (snd monkey.recipientIndexes)
+                            let newScore = int32 ((monkey.operation item) %  modulus)
+                            let recipientIndex = if (newScore % monkey.testDenominator = 0) then (fst monkey.recipientIndexes) else (snd monkey.recipientIndexes)
                             let recipient = monkeys[recipientIndex] 
                             let newRecipient = {recipient with items = Array.append recipient.items [|newScore|] }
                             Array.set monkeys recipientIndex newRecipient
-                            let newMonkey = {monkey with items = Array.empty<bigint>}
+                            let newMonkey = {monkey with items = Array.empty<int>}
                             Array.set monkeys i newMonkey)
 
     monkeys 
@@ -97,33 +102,29 @@ let run (path: string) =
         |> Seq.map parseMonkey
         |> Seq.toArray
 
-    let counts = Array.create (Array.length monkeys) 0L
+    let counts = Array.create (Array.length monkeys) 0
 
-    let monkeys1 = Array.copy monkeys
+    let part1Monkeys = Array.copy monkeys
 
     for rnd in 1..20 do 
-        processRound monkeys1 counts
+        processRound part1Monkeys counts
 
     let part1 = 
         counts |> Array.mapi (fun i x -> (i, x))
                |> Array.sortByDescending snd
                |> (fun res -> (snd res[0]) * (snd res[1]))
-    
-    printf "Part 1: %d\n" part1
-    
-    let monkeys2 = Array.copy monkeys
-    let counts2 = Array.create (Array.length monkeys) 0L
 
-    for rnd in 1..10_000 do 
-        if rnd % 100 = 0 then printf "Round %d" rnd
-        processRound2  monkeys2 counts2
-    
+    printf "Part 1: %d\n" part1
+
+    let counts2 = Array.create (Array.length monkeys) 0
+
+    for rnd in 1..10_000 do
+        processRound2 monkeys counts2
+
     let part2 = 
         counts2 |> Array.mapi (fun i x -> (i, x))
                 |> Array.sortByDescending snd
-                |> (fun res -> (snd res[0]) * (snd res[1]))
+                |> (fun res -> (bigint (snd res[0])) * (bigint (snd res[1])))
 
-
-    printf "Part 2: %d\n" part2
-    
+    printf "Round 2: %A" part2
     ()
